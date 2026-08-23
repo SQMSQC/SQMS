@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueCounter+ | Live Track</title>
+    <link href="style.css" rel="stylesheet">
+    <style>.fade-text { transition: opacity 0.4s ease-in-out; } .toast { transition: transform 0.3s, opacity 0.3s; }</style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4 antialiased text-gray-900">
+    <div id="toast-container" aria-live="polite" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2"></div>
+
+    <main class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl font-extrabold text-blue-600 tracking-tight">QueueCounter<span class="text-green-500">+</span></h1>
+            <p class="text-gray-500 mt-1 text-sm font-medium">Know your turn. Save your time.</p>
+        </header>
+
+        <form id="joinForm" class="space-y-5" aria-label="Join Queue Form">
+            <div>
+                <label for="name" class="block text-sm font-semibold text-gray-700 mb-1">Patient Name</label>
+                <input type="text" id="name" required class="block w-full rounded-lg border-gray-300 bg-gray-50 border p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition">
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-semibold text-gray-700 mb-1">WhatsApp Number</label>
+                <input type="tel" id="phone" pattern="[+0-9]{10,14}" required class="block w-full rounded-lg border-gray-300 bg-gray-50 border p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition">
+            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white p-3.5 rounded-lg font-bold text-lg hover:bg-blue-700 shadow-md transition-all active:scale-95 focus:ring-4 focus:ring-blue-300 outline-none">Join the Queue</button>
+        </form>
+
+        <section id="statusView" class="hidden flex flex-col items-center mt-2" aria-live="polite">
+            <div class="relative flex justify-center items-center w-32 h-32 mb-4">
+                <div class="absolute inline-flex w-full h-full rounded-full bg-green-400 opacity-20 animate-ping"></div>
+                <div class="relative flex flex-col justify-center items-center w-24 h-24 bg-green-500 rounded-full shadow-lg border-4 border-green-100 text-white">
+                    <span class="text-xs uppercase font-bold tracking-wider opacity-90">Token</span>
+                    <span id="displayToken" class="text-3xl font-black">--</span>
+                </div>
+            </div>
+            <h2 id="liveStatusText" class="text-xl font-bold text-gray-800 mb-1">You are in the queue!</h2>
+            <p class="text-gray-500 font-medium mb-6">People ahead of you: <span id="peopleAhead" class="font-bold text-blue-600 text-lg">--</span></p>
+            <div class="w-full bg-gray-50 border border-gray-200 p-4 rounded-xl mb-6 flex justify-between items-center">
+                <span class="text-gray-600 font-semibold">Est. Wait Time</span>
+                <span id="displayTime" class="text-2xl font-black text-gray-900">-- mins</span>
+            </div>
+            <div class="w-full bg-blue-50 border border-blue-100 p-4 rounded-xl text-center">
+                <span class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-2 block">While you wait</span>
+                <p id="triviaText" class="text-sm text-blue-800 font-medium fade-text min-h-[40px]">Drinking water boosts metabolism by up to 30%.</p>
+            </div>
+            <button id="cancelBtn" class="mt-6 w-full bg-red-50 text-red-600 border border-red-200 p-3 rounded-lg font-bold hover:bg-red-100 transition focus:ring-4 focus:ring-red-200 outline-none">Cancel My Turn</button>
+        </section>
+    </main>
+
+    <script>
+        const API_URL = 'YOUR_WEB_APP_URL_HERE'; // REPLACE THIS
+        
+        const State = { token: null, interval: null, triviaIndex: 0 };
+        const trivia = ["Drinking water boosts metabolism by up to 30%.", "Laughing can increase blood flow by 20%.", "Walking 15 mins a day improves mood."];
+
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast translate-y-[-100%] opacity-0 ${type==='error'?'bg-red-600':'bg-gray-800'} text-white px-4 py-2 rounded shadow-lg text-sm font-medium`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'));
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = 'Joining...'; btn.disabled = true;
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'join', name: document.getElementById('name').value, phone: document.getElementById('phone').value }) });
+                const result = await res.json();
+                if(result.success) {
+                    State.token = result.token;
+                    document.getElementById('joinForm').classList.add('hidden');
+                    document.getElementById('statusView').classList.remove('hidden');
+                    document.getElementById('displayToken').innerText = '#' + State.token;
+                    document.getElementById('displayTime').innerText = result.waitTime + ' mins';
+                    setInterval(() => {
+                        const el = document.getElementById('triviaText'); el.style.opacity = 0;
+                        setTimeout(() => { State.triviaIndex = (State.triviaIndex + 1) % trivia.length; el.innerText = trivia[State.triviaIndex]; el.style.opacity = 1; }, 400);
+                    }, 8000);
+                    startLiveTracking();
+                } else throw new Error('Failed to join');
+            } catch (error) { showToast('Error joining queue'); btn.innerText = 'Join the Queue'; btn.disabled = false; }
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', async function() {
+            if(confirm("Are you sure you want to leave the queue?")) {
+                this.innerText = 'Cancelling...'; this.disabled = true;
+                try {
+                    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'cancel', token: State.token }) });
+                    clearInterval(State.interval);
+                    document.getElementById('statusView').innerHTML = `<div class="text-center py-10"><h2 class="text-2xl font-bold text-gray-800 mb-2">You left the queue.</h2></div>`;
+                } catch (e) { showToast('Error cancelling'); this.innerText = 'Cancel My Turn'; this.disabled = false; }
+            }
+        });
+
+        async function fetchQueueStatus() {
+            if (!State.token || document.hidden) return;
+            try {
+                const res = await fetch(`${API_URL}?token=${State.token}`);
+                const data = await res.json();
+                if(data.user) {
+                    document.getElementById('displayTime').innerText = data.user.dynamicWait + ' mins';
+                    document.getElementById('peopleAhead').innerText = data.peopleAhead;
+                    const st = document.getElementById('liveStatusText');
+                    if (data.user.status === 'Active') { st.innerText = "It's almost your turn!"; st.className = 'text-xl font-bold text-blue-600 mb-1'; } 
+                    else if (data.user.status === 'Completed') { st.innerText = "See the doctor now."; st.className = 'text-xl font-bold text-green-600 mb-1'; clearInterval(State.interval); } 
+                    else if (data.user.status === 'Cancelled') clearInterval(State.interval);
+                }
+            } catch (e) { console.error(e); }
+        }
+        function startLiveTracking() { fetchQueueStatus(); State.interval = setInterval(fetchQueueStatus, 10000); document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchQueueStatus(); }); }
+    </script>
+</body>
+</html>
