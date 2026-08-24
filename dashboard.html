@@ -196,37 +196,47 @@
             },
             
             renderUI() {
-                const pend = this.state.data.filter(p => p.status === 'Pending');
-                const act = this.state.data.filter(p => p.status === 'Active');
-                const hist = this.state.data.filter(p => ['Completed', 'Cancelled'].includes(p.status)).reverse();
+    const pend = this.state.data.filter(p => p.status === 'Pending');
+    // Fetch both Active and Called patients for the middle column
+    const act = this.state.data.filter(p => p.status === 'Active' || p.status === 'Called');
+    const hist = this.state.data.filter(p => ['Completed', 'Cancelled'].includes(p.status)).reverse();
 
-                document.getElementById('pendingList').innerHTML = pend.map(p => `
-                    <article class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover flex flex-col gap-4">
-                        <div class="flex justify-between items-center"><span class="font-extrabold text-lg text-slate-900">#${p.token} - ${p.name}</span><span class="text-xs font-semibold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md">${p.phone}</span></div>
-                        <div class="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <label class="text-sm font-semibold text-slate-600">Assign Wait (m):</label>
-                            <input type="number" id="time-${p.token}" value="${p.waitTime}" class="border border-slate-200 p-1.5 w-16 text-center rounded-lg font-bold focus:ring-2 focus:ring-brand-500 outline-none">
-                            <button onclick="Dashboard.updateStatus(${p.token}, 'Active')" class="ml-auto bg-brand-500 text-white px-5 py-2 rounded-lg font-bold hover:bg-brand-600 shadow-md shadow-brand-500/20 transition-all active:scale-95">Accept</button>
-                        </div>
-                    </article>`).join('') || '<div class="text-center p-10 bg-white rounded-2xl border border-dashed border-slate-200"><p class="text-slate-400 font-semibold">No pending requests.</p></div>';
+    document.getElementById('pendingList').innerHTML = pend.map(p => `
+        <article class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover flex flex-col gap-4">
+            <div class="flex justify-between items-center"><span class="font-extrabold text-lg text-slate-900">#${p.token} - ${p.name}</span><span class="text-xs font-semibold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md">${p.phone}</span></div>
+            <div class="flex gap-3 items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <label class="text-sm font-semibold text-slate-600">Assign Wait (m):</label>
+                <input type="number" id="time-${p.token}" value="${p.waitTime}" class="border border-slate-200 p-1.5 w-16 text-center rounded-lg font-bold focus:ring-2 focus:ring-brand-500 outline-none">
+                <button onclick="Dashboard.updateStatus(${p.token}, 'Active')" class="ml-auto bg-brand-500 text-white px-5 py-2 rounded-lg font-bold hover:bg-brand-600 shadow-md shadow-brand-500/20 transition-all active:scale-95">Accept</button>
+            </div>
+        </article>`).join('') || '<div class="text-center p-10 bg-white rounded-2xl border border-dashed border-slate-200"><p class="text-slate-400 font-semibold">No pending requests.</p></div>';
 
-                document.getElementById('activeList').innerHTML = act.map(p => `
-                    <article class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border border-slate-100 card-hover">
-                        <div class="flex gap-4 items-center">
-                            <div class="w-14 h-14 bg-gradient-to-br from-brand-100 to-indigo-50 rounded-xl flex items-center justify-center text-brand-600 font-black text-xl border border-brand-100/50">#${p.token}</div>
-                            <div><h3 class="font-extrabold text-lg text-slate-900">${p.name}</h3><p class="text-sm font-medium text-slate-500">Wait: ${p.waitTime} mins</p></div>
-                        </div>
-                        <button onclick="Dashboard.updateStatus(${p.token}, 'Completed')" class="bg-emerald-500 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all active:scale-95">Mark Done</button>
-                    </article>`).join('') || '<div class="text-center p-10 bg-white rounded-2xl border border-dashed border-slate-200"><p class="text-slate-400 font-semibold">Queue is empty.</p></div>';
+    document.getElementById('activeList').innerHTML = act.map(p => {
+        const isCalled = p.status === 'Called';
+        return `
+        <article class="flex justify-between items-center bg-white p-5 rounded-2xl shadow-sm border ${isCalled ? 'border-green-400 shadow-green-500/20' : 'border-slate-100'} card-hover">
+            <div class="flex gap-4 items-center">
+                <div class="w-14 h-14 bg-gradient-to-br ${isCalled ? 'from-green-100 to-emerald-50 text-green-600 border-green-200' : 'from-brand-100 to-indigo-50 text-brand-600 border-brand-100/50'} rounded-xl flex items-center justify-center font-black text-xl border">#${p.token}</div>
+                <div>
+                    <h3 class="font-extrabold text-lg text-slate-900">${p.name}</h3>
+                    <p class="text-sm font-medium ${isCalled ? 'text-green-600 animate-pulse' : 'text-slate-500'}">${isCalled ? 'Calling Patient...' : `Wait: ${p.waitTime} mins`}</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                ${!isCalled ? `<button onclick="Dashboard.updateStatus(${p.token}, 'Called')" class="bg-amber-500 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-amber-600 shadow-md shadow-amber-500/20 transition-all active:scale-95">🔔 Call</button>` : ''}
+                <button onclick="Dashboard.updateStatus(${p.token}, 'Completed')" class="bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-bold hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all active:scale-95">Mark Done</button>
+            </div>
+        </article>`
+    }).join('') || '<div class="text-center p-10 bg-white rounded-2xl border border-dashed border-slate-200"><p class="text-slate-400 font-semibold">Queue is empty.</p></div>';
 
-                document.getElementById('historyList').innerHTML = hist.map(p => {
-                    const isDone = p.status === 'Completed';
-                    return `
-                    <article class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-3">
-                        <div><h3 class="font-bold text-slate-900">#${p.token} - ${p.name}</h3><p class="text-xs font-medium text-slate-400">${p.phone}</p></div>
-                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}">${p.status}</span>
-                    </article>`}).join('') || '<p class="text-slate-400 font-medium text-center p-6">No history recorded yet today.</p>';
-            },
+    document.getElementById('historyList').innerHTML = hist.map(p => {
+        const isDone = p.status === 'Completed';
+        return `
+        <article class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-3">
+            <div><h3 class="font-bold text-slate-900">#${p.token} - ${p.name}</h3><p class="text-xs font-medium text-slate-400">${p.phone}</p></div>
+            <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${isDone ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}">${p.status}</span>
+        </article>`}).join('') || '<p class="text-slate-400 font-medium text-center p-6">No history recorded yet today.</p>';
+},
             
             async updateStatus(t, s) {
                 const w = s === 'Active' ? document.getElementById(`time-${t}`).value : 0;
