@@ -72,13 +72,28 @@
                 </div>
             </div>
             
-            <nav class="flex flex-wrap gap-2" aria-label="Dashboard Actions">
-                <button onclick="Dashboard.loadQueue()" class="text-sm font-bold text-slate-600 hover:text-brand-600 bg-white border border-slate-200 hover:border-brand-200 shadow-sm px-4 py-2.5 rounded-lg transition-all active:scale-95">↻ Refresh</button>
-                <button onclick="Dashboard.showQR()" class="text-sm font-bold text-slate-600 hover:text-purple-600 bg-white border border-slate-200 hover:border-purple-200 shadow-sm px-4 py-2.5 rounded-lg transition-all active:scale-95">📱 QR Code</button>
-                <button onclick="Dashboard.exportCSV()" class="text-sm font-bold text-slate-600 hover:text-green-600 bg-white border border-slate-200 hover:border-green-200 shadow-sm px-4 py-2.5 rounded-lg transition-all active:scale-95">📥 Export</button>
-                <button onclick="Dashboard.triggerReset()" class="text-sm font-bold text-red-600 hover:text-white hover:bg-red-500 bg-red-50 border border-red-100 shadow-sm px-4 py-2.5 rounded-lg transition-all active:scale-95">⚠ Reset</button>
-                <button onclick="Auth.logOut()" class="text-sm font-bold text-slate-500 hover:text-slate-900 bg-transparent px-4 py-2.5 rounded-lg transition-all">Log Out</button>
-            </nav>
+<nav class="flex flex-wrap gap-2" aria-label="Dashboard Actions">
+    <!-- NEW SMART TV BUTTON -->
+    <a href="tv.html" target="_blank" class="flex items-center gap-2 px-5 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl font-extrabold hover:bg-indigo-100 transition-all border border-indigo-100 shadow-sm hover:shadow active:scale-95">
+        <span class="text-xl">📺</span> Launch TV
+    </a>
+    
+    <button onclick="Dashboard.loadQueue()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+        <span class="text-lg">↻</span> Refresh
+    </button>
+    <button onclick="Dashboard.showQR()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+        <span class="text-lg">📱</span> QR Code
+    </button>
+    <button onclick="Dashboard.exportCSV()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+        <span class="text-lg">📥</span> Export
+    </button>
+    <button onclick="Dashboard.triggerReset()" class="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-100 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-all shadow-sm active:scale-95">
+        <span class="text-lg">⚠</span> Reset
+    </button>
+    <button onclick="Auth.logOut()" class="px-4 py-2.5 text-slate-500 font-bold hover:text-slate-800 transition-colors">
+        Log Out
+    </button>
+</nav>
         </header>
 
         <div class="max-w-7xl mx-auto p-6 mt-4">
