@@ -102,7 +102,8 @@
     </main>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec';
+        // Note: This uses your latest active Google Script URL
+        const API_URL = 'https://script.google.com/macros/s/AKfyczN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec';
         
         const State = { token: null, interval: null, triviaIndex: 0 };
         const trivia = [
@@ -111,6 +112,26 @@
             "Walking 15 mins a day vastly improves mood.",
             "Your body produces 25 million new cells each second."
         ];
+
+        // --- LOCAL STORAGE INIT LOGIC ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('qc_token');
+            if (savedToken) {
+                State.token = savedToken;
+                document.getElementById('joinForm').classList.add('hidden');
+                document.getElementById('statusView').classList.remove('hidden');
+                document.getElementById('displayToken').innerText = '#' + State.token;
+                startTrivia();
+                startLiveTracking();
+            }
+        });
+
+        function startTrivia() {
+            setInterval(() => {
+                const el = document.getElementById('triviaText'); el.style.opacity = 0;
+                setTimeout(() => { State.triviaIndex = (State.triviaIndex + 1) % trivia.length; el.innerText = trivia[State.triviaIndex]; el.style.opacity = 1; }, 500);
+            }, 8000);
+        }
 
         function showToast(message, type = 'error') {
             const container = document.getElementById('toast-container');
@@ -134,16 +155,15 @@
                 
                 if(result.success) {
                     State.token = result.token;
+                    // SAVE TO LOCAL STORAGE
+                    localStorage.setItem('qc_token', result.token); 
+
                     document.getElementById('joinForm').classList.add('hidden');
                     document.getElementById('statusView').classList.remove('hidden');
                     document.getElementById('displayToken').innerText = '#' + State.token;
                     document.getElementById('displayTime').innerText = result.waitTime + ' mins';
                     
-                    setInterval(() => {
-                        const el = document.getElementById('triviaText'); el.style.opacity = 0;
-                        setTimeout(() => { State.triviaIndex = (State.triviaIndex + 1) % trivia.length; el.innerText = trivia[State.triviaIndex]; el.style.opacity = 1; }, 500);
-                    }, 8000);
-                    
+                    startTrivia();
                     startLiveTracking();
                 } else throw new Error('Failed to join');
             } catch (error) { 
@@ -158,6 +178,10 @@
                 try {
                     await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'cancel', token: State.token }) });
                     clearInterval(State.interval);
+                    
+                    // CLEAR LOCAL STORAGE
+                    localStorage.removeItem('qc_token');
+                    
                     document.getElementById('statusView').innerHTML = `
                         <div class="text-center py-12">
                             <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-2xl">👋</span></div>
@@ -185,8 +209,12 @@
                         st.innerText = "Please see the doctor."; 
                         st.className = 'text-2xl font-extrabold text-green-500 mb-2'; 
                         clearInterval(State.interval); 
+                        // CLEAR LOCAL STORAGE
+                        localStorage.removeItem('qc_token');
                     } else if (data.user.status === 'Cancelled') {
                         clearInterval(State.interval);
+                        // CLEAR LOCAL STORAGE
+                        localStorage.removeItem('qc_token');
                     }
                 }
             } catch (e) { console.error(e); }
