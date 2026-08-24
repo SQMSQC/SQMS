@@ -105,7 +105,7 @@
         // Note: This uses your latest active Google Script URL
         const API_URL = 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec';
         
-        const State = { token: null, interval: null, triviaIndex: 0 };
+        const State = { token: null, interval: null, triviaIndex: 0, lastStatus: null }; 
         const trivia = [
             "Drinking water boosts metabolism by up to 30%.", 
             "Laughing increases blood flow by 20%.", 
@@ -193,33 +193,73 @@
         });
 
         async function fetchQueueStatus() {
-            if (!State.token || document.hidden) return;
-            try {
-                const res = await fetch(`${API_URL}?token=${State.token}`);
-                const data = await res.json();
-                if(data.user) {
-                    document.getElementById('displayTime').innerText = data.user.dynamicWait + ' mins';
-                    document.getElementById('peopleAhead').innerText = data.peopleAhead;
-                    
+    if (!State.token || document.hidden) return;
+    try {
+        const res = await fetch(`${API_URL}?token=${State.token}`);
+        const data = await res.json();
+        
+        if(data.user) {
+            // Only update wait times if the elements are still on screen
+            const timeEl = document.getElementById('displayTime');
+            const aheadEl = document.getElementById('peopleAhead');
+            if (timeEl) timeEl.innerText = data.user.dynamicWait + ' mins';
+            if (aheadEl) aheadEl.innerText = data.peopleAhead;
+            
+            // Trigger major UI changes ONLY when the status officially changes
+            if (State.lastStatus !== data.user.status) {
+                State.lastStatus = data.user.status;
+                
+                if (data.user.status === 'Active') { 
                     const st = document.getElementById('liveStatusText');
-                    if (data.user.status === 'Active') { 
+                    if (st) {
                         st.innerText = "It's almost your turn!"; 
-                        st.className = 'text-2xl font-extrabold text-brand-600 mb-2'; 
-                    } else if (data.user.status === 'Completed') { 
-                        st.innerText = "Please see the doctor."; 
-                        st.className = 'text-2xl font-extrabold text-green-500 mb-2'; 
-                        clearInterval(State.interval); 
-                        // CLEAR LOCAL STORAGE
-                        localStorage.removeItem('qc_token');
-                    } else if (data.user.status === 'Cancelled') {
-                        clearInterval(State.interval);
-                        // CLEAR LOCAL STORAGE
-                        localStorage.removeItem('qc_token');
+                        st.className = 'text-2xl font-extrabold text-brand-600 mb-2';
                     }
+                } 
+                else if (data.user.status === 'Called') {
+                    // The 'Invite' Screen
+                    document.getElementById('statusView').innerHTML = `
+                        <div class="text-center py-10 w-full animate-pulse">
+                            <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-500/50 border-4 border-white text-white">
+                                <span class="text-5xl">🔔</span>
+                            </div>
+                            <h2 class="text-3xl font-black text-green-600 mb-2 tracking-tight">It's your turn!</h2>
+                            <p class="text-lg text-gray-700 font-bold mb-2">The Doctor is ready for you.</p>
+                            <p class="text-gray-500 font-medium">Please proceed to the consultation room.</p>
+                        </div>
+                    `;
+                } 
+                else if (data.user.status === 'Completed') { 
+                    clearInterval(State.interval); 
+                    localStorage.removeItem('qc_token');
+                    
+                    // The 'Discharge' Screen
+                    document.getElementById('statusView').innerHTML = `
+                        <div class="text-center py-6 w-full fade-text">
+                            <div class="w-24 h-24 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500">
+                                <span class="text-4xl">✨</span>
+                            </div>
+                            <h2 class="text-2xl font-extrabold text-slate-900 mb-2">Thank you for visiting!</h2>
+                            <p class="text-gray-500 font-medium mb-8">We hope you feel better soon, ${data.user.name}.</p>
+                            
+                            <div class="bg-gradient-to-r from-brand-600 to-indigo-600 p-6 rounded-2xl text-white shadow-xl shadow-brand-500/20 mb-8">
+                                <h3 class="font-bold text-lg mb-2">How was your visit?</h3>
+                                <p class="text-brand-100 text-sm mb-4">Your feedback helps us improve our care.</p>
+                                <a href="#" class="inline-block bg-white text-brand-600 px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform">Leave a Google Review</a>
+                            </div>
+                            
+                            <button onclick="location.reload()" class="text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 pb-1 outline-none">Start New Visit</button>
+                        </div>
+                    `;
+                } 
+                else if (data.user.status === 'Cancelled') {
+                    clearInterval(State.interval);
+                    localStorage.removeItem('qc_token');
                 }
-            } catch (e) { console.error(e); }
+            }
         }
-        function startLiveTracking() { 
+    } catch (e) { console.error(e); }
+}        function startLiveTracking() { 
             fetchQueueStatus(); 
             State.interval = setInterval(fetchQueueStatus, 10000); 
             document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchQueueStatus(); }); 
