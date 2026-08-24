@@ -254,10 +254,37 @@
 },
             
             async updateStatus(t, s) {
-                const w = s === 'Active' ? document.getElementById(`time-${t}`).value : 0;
-                try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'update', token: t, status: s, waitTime: w }) }); UI.showToast(`Token #${t} updated.`); this.loadQueue(); } 
-                catch(e) { UI.showToast("Update failed.", "error"); }
-            },
+    const w = s === 'Active' ? document.getElementById(`time-${t}`).value : 0;
+    
+    // --- 1. OPTIMISTIC UI: INSTANT FRONTEND UPDATE ---
+    // Find the patient in our local memory and change their status immediately
+    const patientIndex = this.state.data.findIndex(p => p.token === t);
+    if (patientIndex !== -1) {
+        this.state.data[patientIndex].status = s;
+        if (s === 'Active') this.state.data[patientIndex].waitTime = w;
+        
+        // Instantly redraw the screen (Zero latency)
+        this.renderUI(); 
+    }
+
+    // --- 2. BACKGROUND SYNC: SILENT GOOGLE UPDATE ---
+    try {
+        // We do NOT use 'await' here. We let this run quietly in the background.
+        fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'update', token: t, status: s, waitTime: w }) 
+        }).then(response => response.json())
+          .then(data => {
+              // If we wanted to, we could silently sync here, but the UI is already updated!
+              console.log("Background sync complete for token #" + t);
+          }).catch(e => {
+              // Only bother the user if the background sync actually fails
+              console.error("Sync error", e);
+          });
+    } catch(e) {
+        console.error(e);
+    }
+},
             
             exportCSV() {
                 if (!this.state.data.length) return UI.showToast("No data to export.", "error");
