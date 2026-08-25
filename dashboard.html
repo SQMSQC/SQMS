@@ -145,8 +145,10 @@
     </dialog>
 
     <script>
-        // YOUR NEW LIVE API URL
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec';
+        // 1. DYNAMIC API ROUTING (Pulled from login.html memory)
+        const API_URL = localStorage.getItem('active_api');
+        const CLINIC_ID = localStorage.getItem('clinic_id');
+        const CLINIC_NAME = localStorage.getItem('active_clinic_name');
 
         const UI = {
             showToast: (msg, type = 'success') => {
@@ -160,24 +162,23 @@
             }
         };
 
+        // 2. NEW AUTHENTICATION CHECK
         const Auth = {
-            VALID_HASH: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918", // "admin"
-            async hashString(str) {
-                const buffer = new TextEncoder().encode(str);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-                return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+            checkSession() {
+                if (localStorage.getItem('isLoggedIn') !== 'true' || !API_URL) {
+                    window.location.href = 'login.html';
+                } else {
+                    // Update the UI with the correct clinic name
+                    const headerTitle = document.querySelector('header h1');
+                    if (headerTitle) headerTitle.innerText = CLINIC_NAME;
+                    Dashboard.init();
+                }
             },
-            async verifyLogin(e) {
-                e.preventDefault();
-                const hash = await this.hashString(document.getElementById('passInput').value);
-                if (hash === this.VALID_HASH) { sessionStorage.setItem('authHash', hash); document.getElementById('passInput').value = ''; this.unlock(); } 
-                else document.getElementById('loginError').classList.remove('hidden');
-            },
-            unlock() { document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainDashboard').classList.remove('hidden'); Dashboard.init(); },
-            logOut() { sessionStorage.removeItem('authHash'); document.getElementById('mainDashboard').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); Dashboard.destroy(); },
-            checkSession() { if (sessionStorage.getItem('authHash') === this.VALID_HASH) this.unlock(); }
+            logOut() {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
         };
-        document.getElementById('loginForm').addEventListener('submit', (e) => Auth.verifyLogin(e));
 
         const Dashboard = {
             state: { data: [], intervalId: null, qrGenerated: false },
@@ -288,15 +289,17 @@
             },
             
             showQR() {
-                if (!this.state.qrGenerated) {
-                    const baseUrl = window.location.href.split('?')[0].replace('dashboard.html', '');
-                    const patientUrl = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-                    new QRCode(document.getElementById("qrcode-container"), { text: patientUrl, width: 220, height: 220, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-                    this.state.qrGenerated = true;
-                }
-                document.getElementById('qrModal').showModal();
-            }
-        };
+    if (!this.state.qrGenerated) {
+        const baseUrl = window.location.href.split('?')[0].replace('dashboard.html', '');
+        const cleanBase = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+        // NEW: Appends the clinic ID to the URL (e.g., ?c=citycare)
+        const patientUrl = `${cleanBase}index.html?c=${CLINIC_ID}`;
+        
+        new QRCode(document.getElementById("qrcode-container"), { text: patientUrl, width: 220, height: 220, colorDark: "#0f172a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+        this.state.qrGenerated = true;
+    }
+    document.getElementById('qrModal').showModal();
+}
         
         window.onload = () => Auth.checkSession();
     </script>
