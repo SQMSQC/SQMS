@@ -103,7 +103,22 @@
 
     <script>
         // Note: This uses your latest active Google Script URL
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec';
+        // 1. Read the Clinic ID from the scanned QR Code URL
+const urlParams = new URLSearchParams(window.location.search);
+const clinicId = urlParams.get('c') || 'citycare'; // Fallback for testing
+
+// 2. The Public API Directory (No passwords here, just routing links)
+const PUBLIC_API_DIRECTORY = {
+    'citycare': 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec',
+    'smileplus': 'YOUR_CLINIC_2_API_URL_HERE' // Add new clinics here as you grow
+};
+
+// 3. Assign the correct API based on the QR code
+const API_URL = PUBLIC_API_DIRECTORY[clinicId];
+
+if (!API_URL) {
+    alert("Invalid Clinic QR Code. Please ask the receptionist for assistance.");
+}
         
         const State = { token: null, interval: null, triviaIndex: 0, lastStatus: null }; 
         const trivia = [
