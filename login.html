@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Login | Queue Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen w-screen flex items-center justify-center p-4 antialiased relative overflow-hidden">
+
+    <!-- Decorative Background Elements -->
+    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400/20 rounded-full blur-[80px]"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-[80px]"></div>
+
+    <!-- Login Card -->
+    <div class="bg-white p-10 rounded-[2rem] shadow-2xl border border-slate-100 w-full max-w-md relative z-10 text-center">
+        
+        <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white text-4xl shadow-lg mb-6">
+            ✨
+        </div>
+        
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
+        <p class="text-slate-500 font-semibold mt-2 mb-8">Enter your clinic's PIN to access the dashboard.</p>
+
+        <div class="flex flex-col gap-4">
+            <input 
+                type="password" 
+                id="pinInput" 
+                placeholder="Enter 4-Digit PIN" 
+                class="w-full text-center text-2xl tracking-widest font-bold px-6 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all"
+                onkeypress="if(event.key === 'Enter') Auth.login()"
+            >
+            
+            <button 
+                onclick="Auth.login()" 
+                class="w-full bg-slate-900 text-white font-bold text-lg px-6 py-4 rounded-xl hover:bg-indigo-600 transition-colors shadow-md active:scale-95"
+            >
+                Secure Login
+            </button>
+        </div>
+
+        <p id="errorMessage" class="text-red-500 font-bold mt-4 opacity-0 transition-opacity">Invalid PIN. Please try again.</p>
+    </div>
+
+    <script>
+        // --- THE MASTER REGISTRY ---
+        // This acts as your database of clinics. Add new clinics here as you grow!
+        const CLINIC_DIRECTORY = {
+            '1234': {
+                id: 'citycare',
+                name: 'City Care Clinic',
+                api: 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec' // Clinic 1
+            },
+            '5678': {
+                id: 'smileplus',
+                name: 'Smile Plus Dental',
+                api: 'YOUR_CLINIC_2_API_URL_HERE' // Clinic 2 (Replace when ready)
+            }
+        };
+
+        const Auth = {
+            login() {
+                const pin = document.getElementById('pinInput').value;
+                const clinic = CLINIC_DIRECTORY[pin];
+                const errorText = document.getElementById('errorMessage');
+                
+                if (clinic) {
+                    // Success! Memorize the clinic's data and jump to the dashboard
+                    localStorage.setItem('active_api', clinic.api);
+                    localStorage.setItem('active_clinic_name', clinic.name);
+                    localStorage.setItem('clinic_id', clinic.id);
+                    localStorage.setItem('isLoggedIn', 'true');
+                    
+                    window.location.href = 'dashboard.html';
+                } else {
+                    // Fail: Show error message
+                    errorText.style.opacity = 1;
+                    setTimeout(() => errorText.style.opacity = 0, 3000);
+                    document.getElementById('pinInput').value = '';
+                }
+            }
+        };
+
+        // If they are already logged in, skip this page automatically
+        if (localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('active_api')) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>
