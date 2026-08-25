@@ -80,7 +80,20 @@
     <audio id="chime" src="https://actions.google.com/sounds/v1/alarms/positive_alert_beep.ogg" preload="auto"></audio>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec';
+        const API_URL = localStorage.getItem('active_api');
+const CLINIC_NAME = localStorage.getItem('active_clinic_name');
+
+if (!API_URL) {
+    window.location.href = 'login.html'; // Kick unauthorized users back to login
+}
+
+// Update the TV headers with the correct Clinic Name
+document.addEventListener('DOMContentLoaded', () => {
+    if (CLINIC_NAME) {
+        document.querySelector('header h1').innerText = CLINIC_NAME;
+        document.querySelector('.mt-auto p.text-slate-800').innerText = CLINIC_NAME;
+    }
+});
         let lastCalledToken = null;
         const trivia = [
             "Drinking water boosts your metabolism by up to 30%.", 
