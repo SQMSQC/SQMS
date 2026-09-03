@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QueueCounter+ | Premium Patient Experience</title>
     
-    <!-- Premium Font & Tailwind Runtime Engine -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -39,8 +38,15 @@
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 antialiased text-gray-900 selection:bg-brand-500 selection:text-white">
+<body class="flex items-center justify-center p-4 antialiased text-gray-900 selection:bg-brand-500 selection:text-white relative">
     
+    <!-- Premium Floating Language Toggle (Hidden by Default) -->
+    <div id="langToggleContainer" class="hidden absolute top-6 right-6 z-50">
+        <button id="langBtn" class="bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-full px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <span>🌐</span> <span id="langLabel">मराठी</span>
+        </button>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast-container" aria-live="polite" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3"></div>
 
@@ -50,19 +56,19 @@
 
         <header class="text-center mb-10 relative z-10">
             <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600 tracking-tight mb-2">QueueCounter<span class="text-green-500">+</span></h1>
-            <p class="text-gray-500 font-medium text-sm">Seamless. Transparent. Fast.</p>
+            <p id="t-slogan" class="text-gray-500 font-medium text-sm">Seamless. Transparent. Fast.</p>
         </header>
 
         <!-- Join Form -->
         <form id="joinForm" class="space-y-6 relative z-10">
             <div class="relative">
                 <input type="text" id="name" placeholder=" " required class="block w-full rounded-xl border-gray-200 bg-white/50 border p-4 text-gray-900 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all peer placeholder-transparent">
-                <label for="name" class="absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 left-4 z-10 origin-[0] peer-focus:text-brand-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-50%] peer-focus:scale-85 peer-focus:-translate-y-[1.5rem] bg-transparent px-1 font-medium pointer-events-none">Full Name</label>
+                <label id="t-name" for="name" class="absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 left-4 z-10 origin-[0] peer-focus:text-brand-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-50%] peer-focus:scale-85 peer-focus:-translate-y-[1.5rem] bg-transparent px-1 font-medium pointer-events-none">Full Name</label>
             </div>
             
             <div class="relative">
                 <input type="tel" id="phone" pattern="[+0-9]{10,14}" placeholder=" " required class="block w-full rounded-xl border-gray-200 bg-white/50 border p-4 text-gray-900 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all peer placeholder-transparent">
-                <label for="phone" class="absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 left-4 z-10 origin-[0] peer-focus:text-brand-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-50%] peer-focus:scale-85 peer-focus:-translate-y-[1.5rem] bg-transparent px-1 font-medium pointer-events-none">WhatsApp Number</label>
+                <label id="t-phone" for="phone" class="absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 left-4 z-10 origin-[0] peer-focus:text-brand-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-50%] peer-focus:scale-85 peer-focus:-translate-y-[1.5rem] bg-transparent px-1 font-medium pointer-events-none">WhatsApp Number</label>
             </div>
             
             <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-brand-600 to-indigo-600 text-white p-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-brand-500/30 transition-all active:scale-95 outline-none">
@@ -73,26 +79,21 @@
         <!-- Live Status View -->
         <section id="statusView" class="hidden flex flex-col items-center mt-2 relative z-10">
             <!-- Spinning Ambient Loader -->
-<div class="relative flex justify-center items-center w-40 h-40 mb-6">
-    <div class="absolute w-full h-full rounded-full border-4 border-dashed border-brand-300 border-t-brand-600 animate-[spin_8s_linear_infinite] opacity-50"></div>
-    <div class="absolute inline-flex w-32 h-32 rounded-full bg-brand-500 opacity-20 animate-pulse"></div>
-    <div class="relative flex flex-col justify-center items-center w-28 h-28 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-full shadow-2xl border-2 border-white/50 text-white backdrop-blur-sm">
-        <span class="text-[0.65rem] uppercase font-bold tracking-widest opacity-80 mb-1">Token</span>
-        <span id="displayToken" class="text-4xl font-black leading-none">--</span>
-    </div>
-</div>
-
-            <h2 id="liveStatusText" class="text-2xl font-extrabold text-gray-900 mb-2">You're in the queue!</h2>
-            <p class="text-gray-500 font-medium mb-8">Patients ahead of you: <span id="peopleAhead" class="font-black text-brand-600 text-xl ml-1">--</span></p>
-
-            <div class="w-full bg-white/80 border border-gray-100 p-5 rounded-2xl mb-6 flex justify-between items-center shadow-sm">
-                <span class="text-gray-600 font-semibold">Estimated Wait</span>
-                <span id="displayTime" class="text-2xl font-black text-brand-600">-- mins</span>
+            <div class="relative flex justify-center items-center w-40 h-40 mb-6">
+                <div class="absolute w-full h-full rounded-full border-4 border-dashed border-brand-300 border-t-brand-600 animate-[spin_8s_linear_infinite] opacity-50"></div>
+                <div class="absolute inline-flex w-32 h-32 rounded-full bg-brand-500 opacity-20 animate-pulse"></div>
+                <div class="relative flex flex-col justify-center items-center w-28 h-28 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-full shadow-2xl border-2 border-white/50 text-white backdrop-blur-sm">
+                    <span id="t-token" class="text-[0.65rem] uppercase font-bold tracking-widest opacity-80 mb-1">Token</span>
+                    <span id="displayToken" class="text-4xl font-black leading-none">--</span>
+                </div>
             </div>
 
-            <div class="w-full bg-brand-50 border border-brand-100 p-5 rounded-2xl text-center shadow-inner">
-                <span class="text-xs font-bold text-brand-400 uppercase tracking-widest mb-2 block">Did you know?</span>
-                <p id="triviaText" class="text-sm text-brand-900 font-medium fade-text min-h-[40px] flex items-center justify-center">Drinking water boosts metabolism by up to 30%.</p>
+            <h2 id="liveStatusText" class="text-2xl font-extrabold text-gray-900 mb-2">You're in the queue!</h2>
+            <p class="text-gray-500 font-medium mb-8"><span id="t-ahead">Patients ahead of you:</span> <span id="peopleAhead" class="font-black text-brand-600 text-xl ml-1">--</span></p>
+
+            <div class="w-full bg-white/80 border border-gray-100 p-5 rounded-2xl mb-6 flex justify-between items-center shadow-sm">
+                <span id="t-wait" class="text-gray-600 font-semibold">Estimated Wait</span>
+                <div class="text-2xl font-black text-brand-600"><span id="displayTime">--</span> <span id="t-mins" class="text-lg">mins</span></div>
             </div>
             
             <button id="cancelBtn" class="mt-8 text-sm font-bold text-gray-400 hover:text-red-500 transition-colors outline-none pb-1 border-b-2 border-transparent hover:border-red-500">
@@ -102,64 +103,114 @@
     </main>
 
     <script>
-        // 1. Read the Clinic ID from the scanned QR Code URL
+        // --- 1. DIRECTORY & FEATURE GATING ---
         const urlParams = new URLSearchParams(window.location.search);
-        const clinicId = urlParams.get('c') || 'citycare'; // Fallback for testing
+        const clinicId = urlParams.get('c') || 'citycare'; 
 
-        // 2. The Public API Directory
         const PUBLIC_API_DIRECTORY = {
-            'citycare': 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec',
-            'smileplus': 'https://script.google.com/macros/s/AKfycbycaFux2UoOzUgkrwljM2l9z6O-caXQMv3D4vDtrBhzsRJ5JUxF3i0-7SKYHvwS_D7zhQ/exec' 
+            'citycare': {
+                url: 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec',
+                plan: 'growth' // Gets translation
+            },
+            'smileplus': {
+                url: 'YOUR_CLINIC_2_API_URL_HERE',
+                plan: 'starter' // NO translation
+            }
         };
 
-        const API_URL = PUBLIC_API_DIRECTORY[clinicId];
-
-        if (!API_URL) {
-            alert("Invalid Clinic QR Code. Please ask the receptionist for assistance.");
-        }
+        const clinicData = PUBLIC_API_DIRECTORY[clinicId];
+        const API_URL = clinicData ? clinicData.url : null;
+        const memoryKey = `qc_token_${clinicId}`; 
         
-        const State = { token: null, interval: null, triviaIndex: 0, lastStatus: null }; 
-        const memoryKey = `qc_token_${clinicId}`; // NEW: Clinic-specific memory!
+        if (!API_URL) alert("Invalid Clinic QR Code.");
 
-        const trivia = [
-            "Hydration is key: Drinking water boosts your metabolism by up to 30%.", 
-            "Laughter is medicine: Laughing physically increases your blood flow by 20%.", 
-            "Your body produces around 25 million new, healthy cells every single second.",
-            "Your brain operates on about 20 watts of electrical power—enough to light a dim bulb!",
-            "Human bones are incredibly dense. Pound for pound, they are stronger than steel.",
-            "A 20-minute power nap can significantly boost your memory, alertness, and mood.",
-            "Your heart is a powerhouse, pumping about 2,000 gallons of blood every single day.",
-            "Listening to your favorite music can naturally reduce anxiety and even physical pain.",
-            "Human teeth are just as strong as shark teeth!",
-            "Taking just a 15-minute walk outside can vastly improve your mood and lower stress.",
-            "Your nose is an incredible sensor—it can remember up to 50,000 different scents.",
-            "Sleep acts like a dishwasher for your brain, clearing out toxins while you rest."
-        ];
+        // --- 2. TRANSLATION ENGINE ---
+        let currentLang = localStorage.getItem('qc_lang') || 'en';
+        
+        const dict = {
+            'slogan': { en: 'Seamless. Transparent. Fast.', mr: 'अखंड. पारदर्शक. जलद.' },
+            'name': { en: 'Full Name', mr: 'पूर्ण नाव' },
+            'phone': { en: 'WhatsApp Number', mr: 'व्हॉट्सॲप नंबर' },
+            'join': { en: 'Join the Waitlist', mr: 'रांगेत सामील व्हा' },
+            'securing': { en: 'Securing spot...', mr: 'जागा निश्चित करत आहे...' },
+            'token': { en: 'Token', mr: 'टोकन' },
+            'in_queue': { en: "You're in the queue!", mr: 'तुम्ही रांगेत आहात!' },
+            'ahead': { en: 'Patients ahead of you:', mr: 'तुमच्या पुढे असलेले रुग्ण:' },
+            'wait': { en: 'Estimated Wait', mr: 'अंदाजे प्रतीक्षा वेळ' },
+            'mins': { en: 'mins', mr: 'मिनिटे' },
+            'cancel': { en: 'Cancel My Turn', mr: 'माझा नंबर रद्द करा' },
+            'cancelling': { en: 'Cancelling...', mr: 'रद्द करत आहे...' },
+            'almost': { en: "It's almost your turn!", mr: 'तुमचा नंबर लवकरच येईल!' },
+            
+            // Dynamic Screens
+            'called_title': { en: "It's your turn!", mr: 'तुमची पाळी आली आहे!' },
+            'called_sub': { en: "The Doctor is ready for you.", mr: 'डॉक्टर तुमच्यासाठी तयार आहेत.' },
+            'completed_title': { en: "Thank you for visiting!", mr: 'भेट दिल्याबद्दल धन्यवाद!' },
+            'completed_sub': { en: "We hope you feel better soon", mr: 'आम्हाला आशा आहे की तुम्हाला लवकरच बरे वाटेल' },
+            'new_visit': { en: "Start New Visit", mr: 'नवीन भेट सुरू करा' },
+            'left_title': { en: "You've left the queue.", mr: 'तुम्ही रांगेतून बाहेर पडला आहात.' },
+            'left_sub': { en: "Have a great day.", mr: 'तुमचा दिवस शुभ जावो.' }
+        };
 
-        // --- LOCAL STORAGE INIT LOGIC ---
+        // Helper to grab text safely
+        const t = (key) => dict[key][currentLang];
+
+        function applyTranslations() {
+            // Static elements
+            if(document.getElementById('t-slogan')) document.getElementById('t-slogan').innerText = t('slogan');
+            if(document.getElementById('t-name')) document.getElementById('t-name').innerText = t('name');
+            if(document.getElementById('t-phone')) document.getElementById('t-phone').innerText = t('phone');
+            if(document.getElementById('submitBtn') && document.getElementById('submitBtn').innerText !== t('securing')) {
+                document.getElementById('submitBtn').innerText = t('join');
+            }
+            if(document.getElementById('t-token')) document.getElementById('t-token').innerText = t('token');
+            if(document.getElementById('t-ahead')) document.getElementById('t-ahead').innerText = t('ahead');
+            if(document.getElementById('t-wait')) document.getElementById('t-wait').innerText = t('wait');
+            if(document.getElementById('t-mins')) document.getElementById('t-mins').innerText = t('mins');
+            
+            if(document.getElementById('cancelBtn') && document.getElementById('cancelBtn').innerText !== t('cancelling')) {
+                document.getElementById('cancelBtn').innerText = t('cancel');
+            }
+
+            // Update toggle button text (show opposite of current)
+            document.getElementById('langLabel').innerText = currentLang === 'en' ? 'मराठी' : 'English';
+            
+            // Force status re-render if active
+            if (State.lastStatus) renderDynamicStatus(State.lastStatus, State.userName);
+        }
+
+        // --- 3. CORE LOGIC ---
+        const State = { token: null, interval: null, lastStatus: null, userName: '' }; 
+
         window.addEventListener('DOMContentLoaded', () => {
+            // Feature Gating check!
+            if (clinicData && (clinicData.plan === 'growth' || clinicData.plan === 'enterprise')) {
+                document.getElementById('langToggleContainer').classList.remove('hidden');
+            }
+            
+            applyTranslations(); // Apply saved language instantly
+
             const savedToken = localStorage.getItem(memoryKey);
             if (savedToken) {
                 State.token = savedToken;
                 document.getElementById('joinForm').classList.add('hidden');
                 document.getElementById('statusView').classList.remove('hidden');
                 document.getElementById('displayToken').innerText = '#' + State.token;
-                startTrivia();
                 startLiveTracking();
             }
         });
 
-        function startTrivia() {
-            setInterval(() => {
-                const el = document.getElementById('triviaText'); el.style.opacity = 0;
-                setTimeout(() => { State.triviaIndex = (State.triviaIndex + 1) % trivia.length; el.innerText = trivia[State.triviaIndex]; el.style.opacity = 1; }, 500);
-            }, 8000);
-        }
+        // Language Toggle Click
+        document.getElementById('langBtn').addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'mr' : 'en';
+            localStorage.setItem('qc_lang', currentLang);
+            applyTranslations();
+        });
 
-        function showToast(message, type = 'error') {
+        function showToast(message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
-            toast.className = `toast translate-y-[-100%] opacity-0 ${type==='error'?'bg-red-500':'bg-gray-900'} text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold border border-white/20`;
+            toast.className = `toast translate-y-[-100%] opacity-0 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold`;
             toast.innerText = message;
             container.appendChild(toast);
             requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'));
@@ -169,52 +220,75 @@
         document.getElementById('joinForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            const originalText = btn.innerText;
-            btn.innerText = 'Securing spot...'; btn.disabled = true;
+            btn.innerText = t('securing'); btn.disabled = true;
+            State.userName = document.getElementById('name').value;
             
             try {
-                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'join', name: document.getElementById('name').value, phone: document.getElementById('phone').value }) });
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'join', name: State.userName, phone: document.getElementById('phone').value }) });
                 const result = await res.json();
                 
                 if(result.success) {
                     State.token = result.token;
-                    
-                    // SAVE TO LOCAL STORAGE (Upgraded)
                     localStorage.setItem(memoryKey, result.token); 
-
                     document.getElementById('joinForm').classList.add('hidden');
                     document.getElementById('statusView').classList.remove('hidden');
                     document.getElementById('displayToken').innerText = '#' + State.token;
-                    document.getElementById('displayTime').innerText = result.waitTime + ' mins';
-                    
-                    startTrivia();
+                    document.getElementById('displayTime').innerText = result.waitTime;
                     startLiveTracking();
-                } else throw new Error('Failed to join');
+                } else throw new Error('Failed');
             } catch (error) { 
-                showToast('Network error. Please try again.'); 
-                btn.innerText = originalText; btn.disabled = false; 
+                showToast('Network error.'); btn.innerText = t('join'); btn.disabled = false; 
             }
         });
 
         document.getElementById('cancelBtn').addEventListener('click', async function() {
-            if(confirm("Are you sure you want to leave the waiting list?")) {
-                this.innerText = 'Cancelling...'; this.disabled = true;
+            if(confirm("Are you sure?")) {
+                this.innerText = t('cancelling'); this.disabled = true;
                 try {
                     await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'cancel', token: State.token }) });
-                    clearInterval(State.interval);
-                    
-                    // CLEAR LOCAL STORAGE (Upgraded)
-                    localStorage.removeItem(memoryKey);
-                    
-                    document.getElementById('statusView').innerHTML = `
-                        <div class="text-center py-12">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-2xl">👋</span></div>
-                            <h2 class="text-2xl font-bold text-gray-800 mb-2">You've left the queue.</h2>
-                            <p class="text-gray-500 font-medium">Have a great day.</p>
-                        </div>`;
-                } catch (e) { showToast('Error cancelling'); this.innerText = 'Cancel My Turn'; this.disabled = false; }
+                    renderDynamicStatus('Cancelled');
+                } catch (e) { showToast('Error'); this.innerText = t('cancel'); this.disabled = false; }
             }
         });
+
+        function renderDynamicStatus(status, name = '') {
+            State.lastStatus = status;
+            
+            if (status === 'Active') { 
+                const st = document.getElementById('liveStatusText');
+                if (st) {
+                    st.innerText = t('almost'); 
+                    st.className = 'text-2xl font-extrabold text-brand-600 mb-2';
+                }
+            } 
+            else if (status === 'Called') {
+                document.getElementById('statusView').innerHTML = `
+                    <div class="text-center py-10 w-full animate-pulse">
+                        <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl text-white border-4 border-white"><span class="text-5xl">🔔</span></div>
+                        <h2 class="text-3xl font-black text-green-600 mb-2">${t('called_title')}</h2>
+                        <p class="text-lg text-gray-700 font-bold mb-2">${t('called_sub')}</p>
+                    </div>`;
+            } 
+            else if (status === 'Completed') { 
+                clearInterval(State.interval); localStorage.removeItem(memoryKey);
+                document.getElementById('statusView').innerHTML = `
+                    <div class="text-center py-6 w-full fade-text">
+                        <div class="w-24 h-24 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500"><span class="text-4xl">✨</span></div>
+                        <h2 class="text-2xl font-extrabold text-slate-900 mb-2">${t('completed_title')}</h2>
+                        <p class="text-gray-500 font-medium mb-8">${t('completed_sub')}, ${name}.</p>
+                        <button onclick="location.reload()" class="text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 pb-1">${t('new_visit')}</button>
+                    </div>`;
+            } 
+            else if (status === 'Cancelled') {
+                clearInterval(State.interval); localStorage.removeItem(memoryKey);
+                document.getElementById('statusView').innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-2xl">👋</span></div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">${t('left_title')}</h2>
+                        <p class="text-gray-500 font-medium">${t('left_sub')}</p>
+                    </div>`;
+            }
+        }
 
         async function fetchQueueStatus() {
             if (!State.token || document.hidden) return;
@@ -223,63 +297,14 @@
                 const data = await res.json();
                 
                 if(data.user) {
+                    State.userName = data.user.name;
                     const timeEl = document.getElementById('displayTime');
                     const aheadEl = document.getElementById('peopleAhead');
-                    if (timeEl) timeEl.innerText = data.user.dynamicWait + ' mins';
+                    if (timeEl) timeEl.innerText = data.user.dynamicWait;
                     if (aheadEl) aheadEl.innerText = data.peopleAhead;
                     
                     if (State.lastStatus !== data.user.status) {
-                        State.lastStatus = data.user.status;
-                        
-                        if (data.user.status === 'Active') { 
-                            const st = document.getElementById('liveStatusText');
-                            if (st) {
-                                st.innerText = "It's almost your turn!"; 
-                                st.className = 'text-2xl font-extrabold text-brand-600 mb-2';
-                            }
-                        } 
-                        else if (data.user.status === 'Called') {
-                            document.getElementById('statusView').innerHTML = `
-                                <div class="text-center py-10 w-full animate-pulse">
-                                    <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-500/50 border-4 border-white text-white">
-                                        <span class="text-5xl">🔔</span>
-                                    </div>
-                                    <h2 class="text-3xl font-black text-green-600 mb-2 tracking-tight">It's your turn!</h2>
-                                    <p class="text-lg text-gray-700 font-bold mb-2">The Doctor is ready for you.</p>
-                                    <p class="text-gray-500 font-medium">Please proceed to the consultation room.</p>
-                                </div>
-                            `;
-                        } 
-                        else if (data.user.status === 'Completed') { 
-                            clearInterval(State.interval); 
-                            
-                            // CLEAR LOCAL STORAGE (Upgraded)
-                            localStorage.removeItem(memoryKey);
-                            
-                            document.getElementById('statusView').innerHTML = `
-                                <div class="text-center py-6 w-full fade-text">
-                                    <div class="w-24 h-24 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500">
-                                        <span class="text-4xl">✨</span>
-                                    </div>
-                                    <h2 class="text-2xl font-extrabold text-slate-900 mb-2">Thank you for visiting!</h2>
-                                    <p class="text-gray-500 font-medium mb-8">We hope you feel better soon, ${data.user.name}.</p>
-                                    
-                                    <div class="bg-gradient-to-r from-brand-600 to-indigo-600 p-6 rounded-2xl text-white shadow-xl shadow-brand-500/20 mb-8">
-                                        <h3 class="font-bold text-lg mb-2">How was your visit?</h3>
-                                        <p class="text-brand-100 text-sm mb-4">Your feedback helps us improve our care.</p>
-                                        <a href="#" class="inline-block bg-white text-brand-600 px-6 py-2.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform">Leave a Google Review</a>
-                                    </div>
-                                    
-                                    <button onclick="location.reload()" class="text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 pb-1 outline-none">Start New Visit</button>
-                                </div>
-                            `;
-                        } 
-                        else if (data.user.status === 'Cancelled') {
-                            clearInterval(State.interval);
-                            
-                            // CLEAR LOCAL STORAGE (Upgraded)
-                            localStorage.removeItem(memoryKey);
-                        }
+                        renderDynamicStatus(data.user.status, data.user.name);
                     }
                 }
             } catch (e) { console.error(e); }
