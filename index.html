@@ -42,8 +42,8 @@
     
     <!-- Premium Floating Language Toggle (Hidden by Default) -->
     <div id="langToggleContainer" class="hidden absolute top-6 right-6 z-50">
-        <button id="langBtn" class="bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-full px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2">
-            <span>🌐</span> <span id="langLabel">मराठी</span>
+        <button id="langBtn" class="bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-full px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 outline-none">
+            <span>🌐</span> <span id="langLabel">हिंदी</span>
         </button>
     </div>
 
@@ -124,39 +124,41 @@
         
         if (!API_URL) alert("Invalid Clinic QR Code.");
 
-        // --- 2. TRANSLATION ENGINE ---
+        // --- 2. TRANSLATION ENGINE (EN + HI + MR) ---
+        // Always load 'en' by default if memory is empty
         let currentLang = localStorage.getItem('qc_lang') || 'en';
         
+        const langCycle = ['en', 'hi', 'mr'];
+        const nextLangLabel = { 'en': 'हिंदी', 'hi': 'मराठी', 'mr': 'English' };
+        
         const dict = {
-            'slogan': { en: 'Seamless. Transparent. Fast.', mr: 'अखंड. पारदर्शक. जलद.' },
-            'name': { en: 'Full Name', mr: 'पूर्ण नाव' },
-            'phone': { en: 'WhatsApp Number', mr: 'व्हॉट्सॲप नंबर' },
-            'join': { en: 'Join the Waitlist', mr: 'रांगेत सामील व्हा' },
-            'securing': { en: 'Securing spot...', mr: 'जागा निश्चित करत आहे...' },
-            'token': { en: 'Token', mr: 'टोकन' },
-            'in_queue': { en: "You're in the queue!", mr: 'तुम्ही रांगेत आहात!' },
-            'ahead': { en: 'Patients ahead of you:', mr: 'तुमच्या पुढे असलेले रुग्ण:' },
-            'wait': { en: 'Estimated Wait', mr: 'अंदाजे प्रतीक्षा वेळ' },
-            'mins': { en: 'mins', mr: 'मिनिटे' },
-            'cancel': { en: 'Cancel My Turn', mr: 'माझा नंबर रद्द करा' },
-            'cancelling': { en: 'Cancelling...', mr: 'रद्द करत आहे...' },
-            'almost': { en: "It's almost your turn!", mr: 'तुमचा नंबर लवकरच येईल!' },
+            'slogan': { en: 'Seamless. Transparent. Fast.', hi: 'निर्बाध. पारदर्शी. तेज़.', mr: 'अखंड. पारदर्शक. जलद.' },
+            'name': { en: 'Full Name', hi: 'पूरा नाम', mr: 'पूर्ण नाव' },
+            'phone': { en: 'WhatsApp Number', hi: 'व्हाट्सएप नंबर', mr: 'व्हॉट्सॲप नंबर' },
+            'join': { en: 'Join the Waitlist', hi: 'प्रतीक्षा सूची में शामिल हों', mr: 'रांगेत सामील व्हा' },
+            'securing': { en: 'Securing spot...', hi: 'जगह सुरक्षित की जा रही है...', mr: 'जागा निश्चित करत आहे...' },
+            'token': { en: 'Token', hi: 'टोकन', mr: 'टोकन' },
+            'in_queue': { en: "You're in the queue!", hi: 'आप कतार में हैं!', mr: 'तुम्ही रांगेत आहात!' },
+            'ahead': { en: 'Patients ahead of you:', hi: 'आपसे आगे के मरीज:', mr: 'तुमच्या पुढे असलेले रुग्ण:' },
+            'wait': { en: 'Estimated Wait', hi: 'अनुमानित प्रतीक्षा समय', mr: 'अंदाजे प्रतीक्षा वेळ' },
+            'mins': { en: 'mins', hi: 'मिनट', mr: 'मिनिटे' },
+            'cancel': { en: 'Cancel My Turn', hi: 'मेरा नंबर रद्द करें', mr: 'माझा नंबर रद्द करा' },
+            'cancelling': { en: 'Cancelling...', hi: 'रद्द किया जा रहा है...', mr: 'रद्द करत आहे...' },
+            'almost': { en: "It's almost your turn!", hi: 'आपकी बारी आने वाली है!', mr: 'तुमचा नंबर लवकरच येईल!' },
             
             // Dynamic Screens
-            'called_title': { en: "It's your turn!", mr: 'तुमची पाळी आली आहे!' },
-            'called_sub': { en: "The Doctor is ready for you.", mr: 'डॉक्टर तुमच्यासाठी तयार आहेत.' },
-            'completed_title': { en: "Thank you for visiting!", mr: 'भेट दिल्याबद्दल धन्यवाद!' },
-            'completed_sub': { en: "We hope you feel better soon", mr: 'आम्हाला आशा आहे की तुम्हाला लवकरच बरे वाटेल' },
-            'new_visit': { en: "Start New Visit", mr: 'नवीन भेट सुरू करा' },
-            'left_title': { en: "You've left the queue.", mr: 'तुम्ही रांगेतून बाहेर पडला आहात.' },
-            'left_sub': { en: "Have a great day.", mr: 'तुमचा दिवस शुभ जावो.' }
+            'called_title': { en: "It's your turn!", hi: 'आपकी बारी है!', mr: 'तुमची पाळी आली आहे!' },
+            'called_sub': { en: "The Doctor is ready for you.", hi: 'डॉक्टर आपके लिए तैयार हैं।', mr: 'डॉक्टर तुमच्यासाठी तयार आहेत.' },
+            'completed_title': { en: "Thank you for visiting!", hi: 'आने के लिए धन्यवाद!', mr: 'भेट दिल्याबद्दल धन्यवाद!' },
+            'completed_sub': { en: "We hope you feel better soon", hi: 'हमें उम्मीद है कि आप जल्द ही बेहतर महसूस करेंगे', mr: 'आम्हाला आशा आहे की तुम्हाला लवकरच बरे वाटेल' },
+            'new_visit': { en: "Start New Visit", hi: 'नई विज़िट शुरू करें', mr: 'नवीन भेट सुरू करा' },
+            'left_title': { en: "You've left the queue.", hi: 'आप कतार से बाहर हो गए हैं।', mr: 'तुम्ही रांगेतून बाहेर पडला आहात.' },
+            'left_sub': { en: "Have a great day.", hi: 'आपका दिन शुभ हो।', mr: 'तुमचा दिवस शुभ जावो.' }
         };
 
-        // Helper to grab text safely
         const t = (key) => dict[key][currentLang];
 
         function applyTranslations() {
-            // Static elements
             if(document.getElementById('t-slogan')) document.getElementById('t-slogan').innerText = t('slogan');
             if(document.getElementById('t-name')) document.getElementById('t-name').innerText = t('name');
             if(document.getElementById('t-phone')) document.getElementById('t-phone').innerText = t('phone');
@@ -172,10 +174,8 @@
                 document.getElementById('cancelBtn').innerText = t('cancel');
             }
 
-            // Update toggle button text (show opposite of current)
-            document.getElementById('langLabel').innerText = currentLang === 'en' ? 'मराठी' : 'English';
+            document.getElementById('langLabel').innerText = nextLangLabel[currentLang];
             
-            // Force status re-render if active
             if (State.lastStatus) renderDynamicStatus(State.lastStatus, State.userName);
         }
 
@@ -183,12 +183,11 @@
         const State = { token: null, interval: null, lastStatus: null, userName: '' }; 
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Feature Gating check!
             if (clinicData && (clinicData.plan === 'growth' || clinicData.plan === 'enterprise')) {
                 document.getElementById('langToggleContainer').classList.remove('hidden');
             }
             
-            applyTranslations(); // Apply saved language instantly
+            applyTranslations(); 
 
             const savedToken = localStorage.getItem(memoryKey);
             if (savedToken) {
@@ -200,9 +199,10 @@
             }
         });
 
-        // Language Toggle Click
+        // Language Toggle Click (Upgraded)
         document.getElementById('langBtn').addEventListener('click', () => {
-            currentLang = currentLang === 'en' ? 'mr' : 'en';
+            let currentIndex = langCycle.indexOf(currentLang);
+            currentLang = langCycle[(currentIndex + 1) % langCycle.length]; 
             localStorage.setItem('qc_lang', currentLang);
             applyTranslations();
         });
@@ -276,7 +276,7 @@
                         <div class="w-24 h-24 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500"><span class="text-4xl">✨</span></div>
                         <h2 class="text-2xl font-extrabold text-slate-900 mb-2">${t('completed_title')}</h2>
                         <p class="text-gray-500 font-medium mb-8">${t('completed_sub')}, ${name}.</p>
-                        <button onclick="location.reload()" class="text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 pb-1">${t('new_visit')}</button>
+                        <button onclick="location.reload()" class="text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 pb-1 outline-none">${t('new_visit')}</button>
                     </div>`;
             } 
             else if (status === 'Cancelled') {
