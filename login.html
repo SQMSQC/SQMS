@@ -3,91 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Login | Queue Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <title>QueueCounter+ | Premium Patient Experience</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
-</head>
-<body class="bg-slate-50 h-screen w-screen flex items-center justify-center p-4 antialiased relative overflow-hidden">
-
-    <!-- Decorative Background Elements -->
-    <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400/20 rounded-full blur-[80px]"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-[80px]"></div>
-
-    <!-- Login Card -->
-    <div class="bg-white p-10 rounded-[2rem] shadow-2xl border border-slate-100 w-full max-w-md relative z-10 text-center">
-        
-        <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white text-4xl shadow-lg mb-6">
-            ✨
-        </div>
-        
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
-        <p class="text-slate-500 font-semibold mt-2 mb-8">Enter your clinic's PIN to access the dashboard.</p>
-
-        <div class="flex flex-col gap-4">
-            <input 
-                type="password" 
-                id="pinInput" 
-                placeholder="Enter 4-Digit PIN" 
-                class="w-full text-center text-2xl tracking-widest font-bold px-6 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all"
-                onkeypress="if(event.key === 'Enter') Auth.login()"
-            >
-            
-            <button 
-                onclick="Auth.login()" 
-                class="w-full bg-slate-900 text-white font-bold text-lg px-6 py-4 rounded-xl hover:bg-indigo-600 transition-colors shadow-md active:scale-95"
-            >
-                Secure Login
-            </button>
-        </div>
-
-        <p id="errorMessage" class="text-red-500 font-bold mt-4 opacity-0 transition-opacity">Invalid PIN. Please try again.</p>
-    </div>
-
+    
     <script>
-        // --- THE MASTER REGISTRY ---
-        // This acts as your database of clinics. Add new clinics here as you grow!
-        const CLINIC_DIRECTORY = {
-            '1234': {
-                id: 'citycare',
-                name: 'City Care Clinic',
-                api: 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec' // Clinic 1
-            },
-            '5678': {
-                id: 'smileplus',
-                name: 'Smile Plus Dental',
-                api: 'https://script.google.com/macros/s/AKfycbycaFux2UoOzUgkrwljM2l9z6O-caXQMv3D4vDtrBhzsRJ5JUxF3i0-7SKYHvwS_D7zhQ/exec' // Clinic 2 (Replace when ready)
-            }
-        };
-
-        const Auth = {
-            login() {
-                const pin = document.getElementById('pinInput').value;
-                const clinic = CLINIC_DIRECTORY[pin];
-                const errorText = document.getElementById('errorMessage');
-                
-                if (clinic) {
-                    // Success! Memorize the clinic's data and jump to the dashboard
-                    localStorage.setItem('active_api', clinic.api);
-                    localStorage.setItem('active_clinic_name', clinic.name);
-                    localStorage.setItem('clinic_id', clinic.id);
-                    localStorage.setItem('isLoggedIn', 'true');
-                    
-                    window.location.href = 'dashboard.html';
-                } else {
-                    // Fail: Show error message
-                    errorText.style.opacity = 1;
-                    setTimeout(() => errorText.style.opacity = 0, 3000);
-                    document.getElementById('pinInput').value = '';
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 900: '#1e3a8a' } }
                 }
             }
+        }
+    </script>
+
+    <style>
+        body { background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%); min-height: 100vh; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        }
+        .fade-text { transition: opacity 0.5s ease-in-out; }
+        .toast { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s; }
+        input:focus + label, input:not(:placeholder-shown) + label {
+            transform: translateY(-1.5rem) scale(0.85);
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 antialiased text-gray-900 selection:bg-brand-500 selection:text-white relative">
+    
+    <!-- Premium Floating Language Toggle (Hidden by Default) -->
+    <div id="langToggleContainer" class="hidden absolute top-6 right-6 z-50">
+        <button id="langBtn" class="bg-white/80 backdrop-blur-md border border-gray-200 shadow-sm rounded-full px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 outline-none">
+            <span>🌐</span> <span id="langLabel">हिंदी</span>
+        </button>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" aria-live="polite" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3"></div>
+
+    <main class="glass-card p-8 sm:p-10 rounded-3xl w-full max-w-md relative overflow-hidden">
+        <!-- Decorative Background Element -->
+        <div class="absolute -top-20 -right-20 w-40 h-40 bg-brand-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+
+        <header class="text-center mb-10 relative z-10">
+            <h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-indigo-600 tracking-tight mb-2">QueueCounter<span class="text-green-500">+</span></h1>
+            <p id="t-slogan" class="text-gray-500 font-medium text-sm">Seamless. Transparent. Fast.</p>
+        </header>
+
+        <!-- Join Form -->
+        <form id="joinForm" class="space-y-6 relative z-10">
+            <div class="relative">
+                <input type="text" id="name" placeholder=" " required class="block w-full rounded-xl border-gray-200 bg-white/50 border p-4 text-gray-900 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all peer placeholder-transparent">
+                <label id="t-name" for="name" class="absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 left-4 z-10 origin-[0] peer-focus:text-brand-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-50%] peer-focus:scale-85 peer-focus:-translate-y-[1.5rem] bg-transparent px-1 font-medium pointer-events-none">Full Name</label>
+            </div>
+            
+            <div class="relative">
+                <input type="tel" id="phone" pattern="[+0-9]{10,14}" placeholder=" " required class="block w-full rounded-xl border-gray-200 bg-white/50 border p-4 text-gray-900 focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all peer placeholder-transparent">
+                <label id="t-phone" for="phone" class="absolute text-gray-500 duration-300 transform -translate-y-1/2 scale-100 top-1/2 left-4 z-10 origin-[0] peer-focus:text-brand-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-[-50%] peer-focus:scale-85 peer-focus:-translate-y-[1.5rem] bg-transparent px-1 font-medium pointer-events-none">WhatsApp Number</label>
+            </div>
+            
+            <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-brand-600 to-indigo-600 text-white p-4 rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-brand-500/30 transition-all active:scale-95 outline-none">
+                Join the Waitlist
+            </button>
+        </form>
+
+        <!-- Live Status View -->
+        <section id="statusView" class="hidden flex flex-col items-center mt-2 relative z-10">
+            <!-- Spinning Ambient Loader -->
+            <div class="relative flex justify-center items-center w-40 h-40 mb-6">
+                <div class="absolute w-full h-full rounded-full border-4 border-dashed border-brand-300 border-t-brand-600 animate-[spin_8s_linear_infinite] opacity-50"></div>
+                <div class="absolute inline-flex w-32 h-32 rounded-full bg-brand-500 opacity-20 animate-pulse"></div>
+                <div class="relative flex flex-col justify-center items-center w-28 h-28 bg-gradient-to-br from-brand-500 to-indigo-600 rounded-full shadow-2xl border-2 border-white/50 text-white backdrop-blur-sm">
+                    <span id="t-token" class="text-[0.65rem] uppercase font-bold tracking-widest opacity-80 mb-1">Token</span>
+                    <span id="displayToken" class="text-4xl font-black leading-none">--</span>
+                </div>
+            </div>
+
+            <h2 id="liveStatusText" class="text-2xl font-extrabold text-gray-900 mb-2">You're in the queue!</h2>
+            <p class="text-gray-500 font-medium mb-8"><span id="t-ahead">Patients ahead of you:</span> <span id="peopleAhead" class="font-black text-brand-600 text-xl ml-1">--</span></p>
+
+            <div class="w-full bg-white/80 border border-gray-100 p-5 rounded-2xl mb-6 flex justify-between items-center shadow-sm">
+                <span id="t-wait" class="text-gray-600 font-semibold">Estimated Wait</span>
+                <div class="text-2xl font-black text-brand-600"><span id="displayTime">--</span> <span id="t-mins" class="text-lg">mins</span></div>
+            </div>
+            
+            <button id="cancelBtn" class="mt-8 text-sm font-bold text-gray-400 hover:text-red-500 transition-colors outline-none pb-1 border-b-2 border-transparent hover:border-red-500">
+                Cancel My Turn
+            </button>
+        </section>
+    </main>
+
+    <script>
+        // --- 1. DIRECTORY & FEATURE GATING ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const clinicId = urlParams.get('c') || 'citycare'; 
+
+        const PUBLIC_API_DIRECTORY = {
+            'citycare': {
+                url: 'https://script.google.com/macros/s/AKfycbzN4GuiY6ue5D0UTj8nJ5XSKtjbv8Y8CFdYyC1e-citPAcjYlHwgYE9-yVYUttfET-4CQ/exec',
+                plan: 'growth' // Gets translation
+            },
+            'smileplus': {
+               url: 'https://script.google.com/macros/s/AKfycbycaFux2UoOzUgkrwljM2l9z6O-caXQMv3D4vDtrBhzsRJ5JUxF3i0-7SKYHvwS_D7zhQ/exec', 
+                plan: 'starter' // NO translation
+            }
         };
 
-        // If they are already logged in, skip this page automatically
-        if (localStorage.getItem('isLoggedIn') === 'true' && localStorage.getItem('active_api')) {
-            window.location.href = 'dashboard.html';
+        const clinicData = PUBLIC_API_DIRECTORY[clinicId];
+        const API_URL = clinicData ? clinicData.url : null;
+        const memoryKey = `qc_token_${clinicId}`; 
+        
+        if (!API_URL) alert("Invalid Clinic QR Code.");
+
+        // --- 2. TRANSLATION ENGINE (EN + HI + MR) ---
+        let currentLang = localStorage.getItem('qc_lang') || 'en';
+        
+        const langCycle = ['en', 'hi', 'mr'];
+        const nextLangLabel = { 'en': 'हिंदी', 'hi': 'मराठी', 'mr': 'English' };
+        
+        const dict = {
+            'slogan': { en: 'Seamless. Transparent. Fast.', hi: 'निर्बाध. पारदर्शी. तेज़.', mr: 'अखंड. पारदर्शक. जलद.' },
+            'name': { en: 'Full Name', hi: 'पूरा नाम', mr: 'पूर्ण नाव' },
+            'phone': { en: 'WhatsApp Number', hi: 'व्हाट्सएप नंबर', mr: 'व्हॉट्सॲप नंबर' },
+            'join': { en: 'Join the Waitlist', hi: 'प्रतीक्षा सूची में शामिल हों', mr: 'रांगेत सामील व्हा' },
+            'securing': { en: 'Securing spot...', hi: 'जगह सुरक्षित की जा रही है...', mr: 'जागा निश्चित करत आहे...' },
+            'token': { en: 'Token', hi: 'टोकन', mr: 'टोकन' },
+            'in_queue': { en: "You're in the queue!", hi: 'आप कतार में हैं!', mr: 'तुम्ही रांगेत आहात!' },
+            'ahead': { en: 'Patients ahead of you:', hi: 'आपसे आगे के मरीज:', mr: 'तुमच्या पुढे असलेले रुग्ण:' },
+            'wait': { en: 'Estimated Wait', hi: 'अनुमानित प्रतीक्षा समय', mr: 'अंदाजे प्रतीक्षा वेळ' },
+            'mins': { en: 'mins', hi: 'मिनट', mr: 'मिनिटे' },
+            'cancel': { en: 'Cancel My Turn', hi: 'मेरा नंबर रद्द करें', mr: 'माझा नंबर रद्द करा' },
+            'cancelling': { en: 'Cancelling...', hi: 'रद्द किया जा रहा है...', mr: 'रद्द करत आहे...' },
+            'almost': { en: "It's almost your turn!", hi: 'आपकी बारी आने वाली है!', mr: 'तुमचा नंबर लवकरच येईल!' },
+            
+            // Dynamic Screens
+            'called_title': { en: "It's your turn!", hi: 'आपकी बारी है!', mr: 'तुमची पाळी आली आहे!' },
+            'called_sub': { en: "The Doctor is ready for you.", hi: 'डॉक्टर आपके लिए तैयार हैं।', mr: 'डॉक्टर तुमच्यासाठी तयार आहेत.' },
+            'completed_title': { en: "Thank you for visiting!", hi: 'आने के लिए धन्यवाद!', mr: 'भेट दिल्याबद्दल धन्यवाद!' },
+            'completed_sub': { en: "We hope you feel better soon", hi: 'हमें उम्मीद है कि आप जल्द ही बेहतर महसूस करेंगे', mr: 'आम्हाला आशा आहे की तुम्हाला लवकरच बरे वाटेल' },
+            'new_visit': { en: "Start New Visit", hi: 'नई विज़िट शुरू करें', mr: 'नवीन भेट सुरू करा' },
+            'left_title': { en: "You've left the queue.", hi: 'आप कतार से बाहर हो गए हैं।', mr: 'तुम्ही रांगेतून बाहेर पडला आहात.' },
+            'left_sub': { en: "Have a great day.", hi: 'आपका दिन शुभ हो।', mr: 'तुमचा दिवस शुभ जावो.' }
+        };
+
+        const t = (key) => dict[key][currentLang];
+
+        function applyTranslations() {
+            if(document.getElementById('t-slogan')) document.getElementById('t-slogan').innerText = t('slogan');
+            if(document.getElementById('t-name')) document.getElementById('t-name').innerText = t('name');
+            if(document.getElementById('t-phone')) document.getElementById('t-phone').innerText = t('phone');
+            if(document.getElementById('submitBtn') && document.getElementById('submitBtn').innerText !== t('securing')) {
+                document.getElementById('submitBtn').innerText = t('join');
+            }
+            if(document.getElementById('t-token')) document.getElementById('t-token').innerText = t('token');
+            if(document.getElementById('t-ahead')) document.getElementById('t-ahead').innerText = t('ahead');
+            if(document.getElementById('t-wait')) document.getElementById('t-wait').innerText = t('wait');
+            if(document.getElementById('t-mins')) document.getElementById('t-mins').innerText = t('mins');
+            
+            if(document.getElementById('cancelBtn') && document.getElementById('cancelBtn').innerText !== t('cancelling')) {
+                document.getElementById('cancelBtn').innerText = t('cancel');
+            }
+
+            document.getElementById('langLabel').innerText = nextLangLabel[currentLang];
+            
+            if (State.lastStatus) renderDynamicStatus(State.lastStatus, State.userName);
+        }
+
+        // --- 3. CORE LOGIC ---
+        const State = { token: null, interval: null, lastStatus: null, userName: '' }; 
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (clinicData && (clinicData.plan === 'growth' || clinicData.plan === 'enterprise')) {
+                document.getElementById('langToggleContainer').classList.remove('hidden');
+            }
+            
+            applyTranslations(); 
+
+            const savedToken = localStorage.getItem(memoryKey);
+            if (savedToken) {
+                State.token = savedToken;
+                document.getElementById('joinForm').classList.add('hidden');
+                document.getElementById('statusView').classList.remove('hidden');
+                document.getElementById('displayToken').innerText = '#' + State.token;
+                startLiveTracking();
+            }
+        });
+
+        // Language Toggle Click
+        document.getElementById('langBtn').addEventListener('click', () => {
+            let currentIndex = langCycle.indexOf(currentLang);
+            currentLang = langCycle[(currentIndex + 1) % langCycle.length]; 
+            localStorage.setItem('qc_lang', currentLang);
+            applyTranslations();
+        });
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast translate-y-[-100%] opacity-0 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl text-sm font-bold`;
+            toast.innerText = message;
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'));
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 400); }, 3000);
+        }
+
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = t('securing'); btn.disabled = true;
+            State.userName = document.getElementById('name').value;
+            
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'join', name: State.userName, phone: document.getElementById('phone').value }) });
+                const result = await res.json();
+                
+                if(result.success) {
+                    State.token = result.token;
+                    localStorage.setItem(memoryKey, result.token); 
+                    document.getElementById('joinForm').classList.add('hidden');
+                    document.getElementById('statusView').classList.remove('hidden');
+                    document.getElementById('displayToken').innerText = '#' + State.token;
+                    document.getElementById('displayTime').innerText = result.waitTime;
+                    startLiveTracking();
+                } else throw new Error('Failed');
+            } catch (error) { 
+                showToast('Network error.'); btn.innerText = t('join'); btn.disabled = false; 
+            }
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', async function() {
+            if(confirm("Are you sure?")) {
+                this.innerText = t('cancelling'); this.disabled = true;
+                try {
+                    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'cancel', token: State.token }) });
+                    renderDynamicStatus('Cancelled');
+                } catch (e) { showToast('Error'); this.innerText = t('cancel'); this.disabled = false; }
+            }
+        });
+
+        function renderDynamicStatus(status, name = '') {
+            State.lastStatus = status;
+            
+            if (status === 'Active') { 
+                const st = document.getElementById('liveStatusText');
+                if (st) {
+                    st.innerText = t('almost'); 
+                    st.className = 'text-2xl font-extrabold text-brand-600 mb-2';
+                }
+            } 
+            else if (status === 'Called') {
+                document.getElementById('statusView').innerHTML = `
+                    <div class="text-center py-10 w-full animate-pulse">
+                        <div class="w-32 h-32 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl text-white border-4 border-white"><span class="text-5xl">🔔</span></div>
+                        <h2 class="text-3xl font-black text-green-600 mb-2">${t('called_title')}</h2>
+                        <p class="text-lg text-gray-700 font-bold mb-2">${t('called_sub')}</p>
+                    </div>`;
+            } 
+            else if (status === 'Completed') { 
+                clearInterval(State.interval); localStorage.removeItem(memoryKey);
+                document.getElementById('statusView').innerHTML = `
+                    <div class="text-center py-6 w-full fade-text">
+                        <div class="w-24 h-24 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-6 text-brand-500"><span class="text-4xl">✨</span></div>
+                        <h2 class="text-2xl font-extrabold text-slate-900 mb-2">${t('completed_title')}</h2>
+                        <p class="text-gray-500 font-medium mb-8">${t('completed_sub')}, ${name}.</p>
+                        <button onclick="location.reload()" class="text-sm font-bold text-gray-400 hover:text-brand-600 transition-colors border-b-2 border-transparent hover:border-brand-600 pb-1 outline-none">${t('new_visit')}</button>
+                    </div>`;
+            } 
+            else if (status === 'Cancelled') {
+                clearInterval(State.interval); localStorage.removeItem(memoryKey);
+                document.getElementById('statusView').innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><span class="text-2xl">👋</span></div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">${t('left_title')}</h2>
+                        <p class="text-gray-500 font-medium">${t('left_sub')}</p>
+                    </div>`;
+            }
+        }
+
+        async function fetchQueueStatus() {
+            if (!State.token || document.hidden) return;
+            try {
+                const res = await fetch(`${API_URL}?token=${State.token}`);
+                const data = await res.json();
+                
+                if(data.user) {
+                    State.userName = data.user.name;
+                    const timeEl = document.getElementById('displayTime');
+                    const aheadEl = document.getElementById('peopleAhead');
+                    if (timeEl) timeEl.innerText = data.user.dynamicWait;
+                    if (aheadEl) aheadEl.innerText = data.peopleAhead;
+                    
+                    if (State.lastStatus !== data.user.status) {
+                        renderDynamicStatus(data.user.status, data.user.name);
+                    }
+                }
+            } catch (e) { console.error(e); }
+        }        
+        
+        function startLiveTracking() { 
+            fetchQueueStatus(); 
+            State.interval = setInterval(fetchQueueStatus, 10000); 
+            document.addEventListener("visibilitychange", () => { if (!document.hidden) fetchQueueStatus(); }); 
         }
     </script>
 </body>
